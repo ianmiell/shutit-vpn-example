@@ -103,24 +103,12 @@ end''')
 			ip = shutit.send_and_get_output('''vagrant landrush ls 2> /dev/null | grep -w ^''' + machines[machine]['fqdn'] + ''' | awk '{print $2}' ''')
 			machines.get(machine).update({'ip':ip})
 
-
-
-		for machine in sorted(machines.keys()):
-			shutit_session = shutit_sessions[machine]
-			shutit_session.run_script(r'''#!/bin/sh
-# See https://raw.githubusercontent.com/ianmiell/vagrant-swapfile/master/vagrant-swapfile.sh
-fallocate -l ''' + shutit.cfg[self.module_id]['swapsize'] + r''' /swapfile
-ls -lh /swapfile
-chown root:root /swapfile
-chmod 0600 /swapfile
-ls -lh /swapfile
-mkswap /swapfile
-swapon /swapfile
-swapon -s
-grep -i --color swap /proc/meminfo
-echo "
-/swapfile none            swap    sw              0       0" >> /etc/fstab''')
-			shutit_session.multisend('adduser person',{'Enter new UNIX password':'person','Retype new UNIX password:':'person','Full Name':'','Phone':'','Room':'','Other':'','Is the information correct':'Y'})
+		shutit_session = shutit_sessions['vpn1']
+TODO: get 'public' ip to other server and set 'export VPN_PUBLIC_IP=that'
+		shutit_session.send('wget https://git.io/vpnsetup -O vpnsetup.sh')
+		output=shutit_session.send('sh vpnsetup.sh 2>&1 | tee output')
+		shutit_session.send('systemctl enable ipsec.service')
+		shutit_session.pause_point('output')
 
 		for machine in sorted(machines.keys()):
 			shutit_session = shutit_sessions[machine]
